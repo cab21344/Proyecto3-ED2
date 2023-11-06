@@ -1,0 +1,83 @@
+// Electrónica Digital 2 - Proyecto 2
+// María Daniela Cabrera Porras, 21344
+
+// Librerías ******************************************************
+#include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_NeoPixel.h>
+
+//*****************************************************************
+
+// Definiciones ***************************************************
+//#define sensor
+#define NUMPIXELS 16
+#define LEDS 6
+//*****************************************************************
+
+
+// Variables ******************************************************
+String bufferTiva;
+//variable sensor
+//*****************************************************************
+
+//Inicia NeoPixels **********************************************
+Adafruit_NeoPixel pixels(NUMPIXELS, LEDS, NEO_GRB);
+
+
+void setup()
+{
+  //Inicia NeoPixels
+  pixels.begin();
+  pixels.clear();
+  pixels.setBrightness(255);
+
+  pixels.setPixelColor(0, pixels.Color(255,192,203)); //pone los leds en rosado
+  pixels.show();
+
+
+  // start the serial connection
+  Serial.begin(115200);
+  Serial2.begin(115200);
+
+  // wait for serial monitor to open
+  while (!Serial)
+    ;
+  Serial.print("Conectando...");
+
+  // Configurar entradas y salidas ********************************
+  //sensor
+
+
+  //***************************************************************
+}
+
+/*
+void medirSensor(void){
+  temp = dht.readTemperature();
+  hum = dht.readHumidity();
+}*/
+
+void loop() {
+  if (Serial2.available() > 0) {
+    bufferTiva = Serial2.readStringUntil('\n');
+    bufferTiva.trim(); // Eliminar espacios en blanco y caracteres no deseados
+    if (bufferTiva == "measure") {
+      /*medirSensor();
+      Serial.println("Midiendo...");
+      if (!isnan(temp) && !isnan(hum)) { // Comprobar si los valores son válidos
+        String dataToSend = String(temp) + " ; " + String(hum);
+        Serial2.print(dataToSend); // Envía la información al ESP32 como una sola cadena
+        
+        Serial.println("Se envió satisfactoriamente la información:");
+        Serial.print("Temp y hum: ");
+        Serial.print(temp);
+        Serial.print(" ; ");
+        Serial.println(hum);
+        Serial.println("--------------------------------------------");
+      } else {
+        Serial2.println("Error al leer la temperatura y humedad.");
+      }
+      bufferTiva = "";*/
+    }
+  }
+}
