@@ -3,20 +3,22 @@
 
 // Librerías ******************************************************
 #include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_NeoPixel.h>
+#include <Wire.h>              //librería para comunicación I2C
+#include <Adafruit_NeoPixel.h> //librería para neopixel
+#include <MPU6050.h>           //librería sensor
 
 //*****************************************************************
 
 // Definiciones ***************************************************
-// #define sensor
 #define NUMPIXELS 16
 #define LEDS 6
 //*****************************************************************
 
 // Variables ******************************************************
 String bufferTiva;
-// variable sensor
+
+MPU6050 mpu;
+
 //*****************************************************************
 
 // Inicia NeoPixels **********************************************
@@ -47,39 +49,49 @@ void setup()
     ;
   Serial.print("Conectando...");
 
-  // Configurar entradas y salidas ********************************
-  // sensor
+  // configuración sensor
+  Wire.begin();
+  mpu.initialize();
 
-  //***************************************************************
+  if (!mpu.testConnection())
+  {
+    Serial.print("Error al iniciar sensor");
+    while (1)
+      ;
+  }
 }
 
 void loop()
 {
+  // obtener datos del acelerómetro
+  int16_t ax, ay, az;
+  mpu.getAcceleratio(&ax, &ay, &az);
+
   if (Serial2.available() > 0)
   {
     bufferTiva = Serial2.readStringUntil('\n');
     bufferTiva.trim(); // Eliminar espacios en blanco y caracteres no deseados
     if (bufferTiva == "measure")
     {
-      /*medirSensor();
-        Serial.println("Midiendo...");
-        if (!isnan(temp) && !isnan(hum)) { // Comprobar si los valores son válidos
-        String dataToSend = String(temp) + " ; " + String(hum);
+      Serial.println("Midiendo...");
+        String dataToSend = String(ax) + " ; " + String(ay) + " ; " + String(az);
         Serial2.print(dataToSend); // Envía la información al ESP32 como una sola cadena
 
         Serial.println("Se envió satisfactoriamente la información:");
-        Serial.print("Temp y hum: ");
-        Serial.print(temp);
+        Serial.print("Posición en x ; y ; z");
+        Serial.print(ax);
         Serial.print(" ; ");
-        Serial.println(hum);
+        Serial.println(ay);
+        Serial.print(" ; ");
+        Serial.println(az);
         Serial.println("--------------------------------------------");
-        } else {
-        Serial2.println("Error al leer la temperatura y humedad.");
-        }
-        bufferTiva = "";*/
+  
+      bufferTiva = "";
+
       midiendo(); // Neopixel
       delay(500);
     }
+
     if (bufferTiva == "saving")
     {
       guardando(); // Neopixel
@@ -87,11 +99,13 @@ void loop()
       datosGuardados();
       delay(300);
     }
+
     if (bufferTiva == "on")
     {
       encendido(); // Neopixel
       delay(500);
     }
+    
     if (bufferTiva == "error")
     {
       error();
@@ -123,7 +137,7 @@ void guardando()
   { // Repetir tres veces
     for (int i = 0; i < NUMPIXELS; i++)
     {
-      pixels.setPixelColor(i, pixels.Color(0, 200, 200)); //Celeste
+      pixels.setPixelColor(i, pixels.Color(0, 200, 200)); // Celeste
       pixels.show();
       delay(100);
       pixels.clear();
