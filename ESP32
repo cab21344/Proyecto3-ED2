@@ -9,31 +9,34 @@
 //*****************************************************************
 
 // Definiciones ***************************************************
-//#define sensor
+// #define sensor
 #define NUMPIXELS 16
 #define LEDS 6
 //*****************************************************************
 
-
 // Variables ******************************************************
 String bufferTiva;
-//variable sensor
+// variable sensor
 //*****************************************************************
 
-//Inicia NeoPixels **********************************************
+// Inicia NeoPixels **********************************************
 Adafruit_NeoPixel pixels(NUMPIXELS, LEDS, NEO_GRB);
 
+void encendido();
+void midiendo();
+void guardando();
+void datosguardados();
+void error();
 
 void setup()
 {
-  //Inicia NeoPixels
+  // Inicia NeoPixels
   pixels.begin();
   pixels.clear();
   pixels.setBrightness(255);
 
-  pixels.setPixelColor(0, pixels.Color(255,192,203)); //pone los leds en rosado
+  pixels.setPixelColor(0, pixels.Color(255, 192, 203)); // pone los leds en rosado
   pixels.show();
-
 
   // start the serial connection
   Serial.begin(115200);
@@ -45,39 +48,119 @@ void setup()
   Serial.print("Conectando...");
 
   // Configurar entradas y salidas ********************************
-  //sensor
-
+  // sensor
 
   //***************************************************************
 }
 
-/*
-void medirSensor(void){
-  temp = dht.readTemperature();
-  hum = dht.readHumidity();
-}*/
-
-void loop() {
-  if (Serial2.available() > 0) {
+void loop()
+{
+  if (Serial2.available() > 0)
+  {
     bufferTiva = Serial2.readStringUntil('\n');
     bufferTiva.trim(); // Eliminar espacios en blanco y caracteres no deseados
-    if (bufferTiva == "measure") {
+    if (bufferTiva == "measure")
+    {
       /*medirSensor();
-      Serial.println("Midiendo...");
-      if (!isnan(temp) && !isnan(hum)) { // Comprobar si los valores son válidos
+        Serial.println("Midiendo...");
+        if (!isnan(temp) && !isnan(hum)) { // Comprobar si los valores son válidos
         String dataToSend = String(temp) + " ; " + String(hum);
         Serial2.print(dataToSend); // Envía la información al ESP32 como una sola cadena
-        
+
         Serial.println("Se envió satisfactoriamente la información:");
         Serial.print("Temp y hum: ");
         Serial.print(temp);
         Serial.print(" ; ");
         Serial.println(hum);
         Serial.println("--------------------------------------------");
-      } else {
+        } else {
         Serial2.println("Error al leer la temperatura y humedad.");
-      }
-      bufferTiva = "";*/
+        }
+        bufferTiva = "";*/
+      midiendo(); // Neopixel
+      delay(500);
     }
+    if (bufferTiva == "saving")
+    {
+      guardando(); // Neopixel
+      delay(200);
+      datosGuardados();
+      delay(300);
+    }
+    if (bufferTiva == "on")
+    {
+      encendido(); // Neopixel
+      delay(500);
+    }
+    if (bufferTiva == "error")
+    {
+      error();
+      delay(500);
+    }
+  }
+}
+
+// Voids para programar Neopixel ************************************
+void midiendo() // luces que muestra que se mide el sensor
+{
+  for (int j = 0; j < 3; j++)
+  { // Repetir tres veces
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(255, 165, 0)); // Naranja
+      pixels.show();
+      delay(100);
+      pixels.clear();
+      pixels.show();
+    }
+    delay(500);
+  }
+}
+
+void guardando()
+{ // luces que muestran que se estan guardando los datos
+  for (int j = 0; j < 3; j++)
+  { // Repetir tres veces
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(0, 200, 200)); //Celeste
+      pixels.show();
+      delay(100);
+      pixels.clear();
+      pixels.show();
+    }
+    delay(500);
+  }
+}
+
+void datosGuardados() // luces que muestra que se guardaron los datos
+{
+  for (int j = 0; j < 3; j++)
+  {
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(0, 255, 0)); // Verde
+    }
+    pixels.show();
+    delay(20);
+    pixels.clear();
+    pixels.show();
+    delay(20);
+  }
+}
+
+void error() // luces que muestra que se obtuvo un error
+{
+  for (int j = 0; j < 3; j++)
+  {
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(0, 255, 0)); // Rojo
+    }
+    pixels.show();
+    delay(20);
+    pixels.clear();
+    pixels.show();
+    delay(20);
   }
 }
