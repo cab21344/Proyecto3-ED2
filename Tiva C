@@ -118,6 +118,8 @@ void loop() {
   //Lectura estados botones
   estadoMed = digitalRead(botonMedir); 
   estadoGuar = digitalRead(botonGuardar);
+  Serial2.println("on"); //manda mensaje al puerto serial2 (ESP32)
+
 
   //Boton 1 - Pide info al ESP32 **************************************************
   if (estadoMed == LOW) {
@@ -129,7 +131,7 @@ void loop() {
     LCD_Clear(0xFFFF); //limpia la pantalla
 
     FillRect(0, 0, 320, 240, 0xFDA0); //llena la pantalla de anaranjado
-    String text5 = "Temp y hum:";
+    String text5 = "Aceleración:";
     LCD_Print(text5, 20, 75, 2, 0xffff, 0xF81F); //escribe el mensaje con fondo rosado
     LCD_Print(inByte, 20, 100, 2, 0xffff, 0xF81F); //escribe el strign con fondo rosado
     LCD_Bitmap(240, 10, 60, 77, dibujo); //imprime imagen
@@ -139,7 +141,7 @@ void loop() {
 
   if (Serial2.available()) { //lectura del puerto serial2 (ESP32)
     inByte = Serial2.readStringUntil('\n'); //guarda info
-    Serial.println("Temp y hum:");
+    Serial.println("Aceleración:");
     Serial.println(inByte); //imprime info en serial monitor
   }
 
@@ -151,6 +153,7 @@ void loop() {
   //Boton 2 - Guardar info en la SD **************************************************
   if (estadoGuar == LOW) {
     dataFile = SD.open("test.txt", FILE_WRITE); //archivo para SD
+    Serial2.println("saving"); //manda mensaje al puerto serial2 (ESP32)
 
     if (dataFile) {
       dataFile.println(inByte); //guarda dato tarjeta SD
@@ -169,6 +172,8 @@ void loop() {
       tone(buzzerPin, 200, 500); //tono que indica error
       delay(500);
       LCD_Clear(0xFFFF); //limpia pantalla
+      Serial2.println("error"); //manda mensaje al puerto serial2 (ESP32)
+
 
       FillRect(0, 0, 320, 240, 0xFDA0); //llena la pantalla de anaranjado
       String text3 = "Info no almacenada";
