@@ -51,21 +51,34 @@ void setup()
 
   // configuración sensor
   Wire.begin();
-  mpu.initialize();
 
-  if (!mpu.testConnection())
-  {
-    Serial.print("Error al iniciar sensor");
-    while (1)
-      ;
-  }
-}
+  Serial.println("Adafruit MPU6050 test!");
+
+  // Try to initialize!
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+}}
 
 void loop()
 {
-  // obtener datos del acelerómetro
-  int16_t ax, ay, az;
-  mpu.getAcceleratio(&ax, &ay, &az);
+  // obtener datos del acelerómetro  
+  if(mpu.getMotionInterruptStatus()) {
+    /* Get new sensor events with the readings */
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+
+    /* Print out the values */
+    Serial.print("AccelX:");
+    Serial.print(a.acceleration.x);
+    Serial.print(",");
+    Serial.print("AccelY:");
+    Serial.print(a.acceleration.y);
+    Serial.print(",");
+    Serial.print("AccelZ:");
+    Serial.print(a.acceleration.z);
 
   if (Serial2.available() > 0)
   {
@@ -74,16 +87,16 @@ void loop()
     if (bufferTiva == "measure")
     {
       Serial.println("Midiendo...");
-        String dataToSend = String(ax) + " ; " + String(ay) + " ; " + String(az);
+        String dataToSend = String(a.acceleration.x) + " ; " + String(a.acceleration.y) + " ; " + String(a.acceleration.z);
         Serial2.print(dataToSend); // Envía la información al ESP32 como una sola cadena
 
         Serial.println("Se envió satisfactoriamente la información:");
         Serial.print("Posición en x ; y ; z");
-        Serial.print(ax);
+        Serial.print(a.acceleration.x);
         Serial.print(" ; ");
-        Serial.println(ay);
+        Serial.println(a.acceleration.y);
         Serial.print(" ; ");
-        Serial.println(az);
+        Serial.println(a.acceleration.z);
         Serial.println("--------------------------------------------");
   
       bufferTiva = "";
@@ -112,7 +125,7 @@ void loop()
       delay(500);
     }
   }
-}
+}}
 
 // Voids para programar Neopixel ************************************
 void midiendo() // luces que muestra que se mide el sensor
