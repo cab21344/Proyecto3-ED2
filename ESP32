@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <Wire.h>              //librería para comunicación I2C
 #include <Adafruit_NeoPixel.h> //librería para neopixel
-#include <MPU6050.h>           //librería sensor
+#include <Adafruit_MPU6050.h>           //librería sensor
 
 //*****************************************************************
 
@@ -17,7 +17,7 @@
 // Variables ******************************************************
 String bufferTiva;
 
-MPU6050 mpu;
+Adafruit_MPU6050 mpu;
 
 //*****************************************************************
 
@@ -105,7 +105,7 @@ void loop()
       encendido(); // Neopixel
       delay(500);
     }
-    
+
     if (bufferTiva == "error")
     {
       error();
