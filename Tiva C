@@ -82,14 +82,14 @@ void setup() {
 
 
   //se inicia SD ***********************
-  Serial.println("Iniciando tarjeta SD");
+ /* Serial.println("Iniciando tarjeta SD");
 
   if (!SD.begin(chipSelect)) { //pin de la SD
     Serial.println("Inicialización fallida de SD");
     return; //si falla que se quede en bucle
     }
     Serial.println("Tarjeta SD inicializada"); //mensaje de SD inicializada
-
+*/
 
   //Indica que se inició comunicación serial ***********************
   Serial.println("Inicio de comunicación serial"); //confimación comunicación serial
@@ -118,13 +118,13 @@ void loop() {
   //Lectura estados botones
   estadoMed = digitalRead(botonMedir); 
   estadoGuar = digitalRead(botonGuardar);
-  Serial2.println("on"); //manda mensaje al puerto serial2 (ESP32)
+  Serial2.println("on"); //manda mensaje de encendido (ESP32)
 
 
   //Boton 1 - Pide info al ESP32 **************************************************
   if (estadoMed == LOW) {
     Serial.println("Medición:");
-    Serial2.println("measure"); //manda mensaje al puerto serial2 (ESP32)
+    Serial2.println("measure"); //manda mensaje de midiendo (ESP32)
     tone(buzzerPin, 500, 500); //tono de medición
     delay(500);
 
@@ -153,12 +153,13 @@ void loop() {
   //Boton 2 - Guardar info en la SD **************************************************
   if (estadoGuar == LOW) {
     dataFile = SD.open("test.txt", FILE_WRITE); //archivo para SD
-    Serial2.println("saving"); //manda mensaje al puerto serial2 (ESP32)
+    Serial2.println("saving"); //manda mensaje de que se esta guardando (ESP32)
 
     if (dataFile) {
       dataFile.println(inByte); //guarda dato tarjeta SD
       dataFile.close();
       Serial.println("Información almacenada en la SD!");
+      Serial2.println("saved"); //manda mensaje de guardado (ESP32)
       tone(buzzerPin, 1000, 500); //tono que indica almaceno la info
       delay(500);
       LCD_Clear(0xFFFF); //limpia la pantalla
@@ -169,6 +170,7 @@ void loop() {
       LCD_Bitmap(240, 10, 60, 77, dibujo); //imprime imagen
     } else {
       Serial.println("Error al almacenar información");
+      Serial2.println("error"); //manda mensaje de error (ESP32)
       tone(buzzerPin, 200, 500); //tono que indica error
       delay(500);
       LCD_Clear(0xFFFF); //limpia pantalla
