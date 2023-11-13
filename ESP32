@@ -5,13 +5,13 @@
 #include <Arduino.h>
 #include <Wire.h>              //librería para comunicación I2C
 #include <Adafruit_NeoPixel.h> //librería para neopixel
-#include <Adafruit_MPU6050.h>           //librería sensor
+#include <Adafruit_MPU6050.h>  //librería sensor
 
 //*****************************************************************
 
 // Definiciones ***************************************************
-#define NUMPIXELS 16
-#define LEDS 6
+#define NUMPIXELS 16 // numero de pixeles
+#define LEDS 23      // pin de neopixeles
 //*****************************************************************
 
 // Variables ******************************************************
@@ -35,7 +35,7 @@ void setup()
   // Inicia NeoPixels
   pixels.begin();
   pixels.clear();
-  pixels.setBrightness(255);
+  pixels.setBrightness(155);
 
   pixels.setPixelColor(0, pixels.Color(255, 192, 203)); // pone los leds en rosado
   pixels.show();
@@ -55,22 +55,24 @@ void setup()
   Serial.println("Adafruit MPU6050 test!");
 
   // Try to initialize!
-  if (!mpu.begin()) {
+  if (!mpu.begin())
+  {
     Serial.println("Failed to find MPU6050 chip");
-    while (1) {
-      delay(10);
-    }
-}}
+    Serial.println("Program will exit due to sensor initialization failure");
+    exit(1); // Detener la ejecución del programa
+  }
+}
 
 void loop()
 {
-  // obtener datos del acelerómetro  
-  if(mpu.getMotionInterruptStatus()) {
-    /* Get new sensor events with the readings */
+  // obtener datos del acelerómetro
+  if (mpu.getMotionInterruptStatus())
+  {
+    // Get new sensor events with the readings
     sensors_event_t a, g, temp;
     mpu.getEvent(&a, &g, &temp);
 
-    /* Print out the values */
+    // Print out the values
     Serial.print("AccelX:");
     Serial.print(a.acceleration.x);
     Serial.print(",");
@@ -80,13 +82,24 @@ void loop()
     Serial.print("AccelZ:");
     Serial.print(a.acceleration.z);
 
-  if (Serial2.available() > 0)
-  {
-    bufferTiva = Serial2.readStringUntil('\n');
-    bufferTiva.trim(); // Eliminar espacios en blanco y caracteres no deseados
-    if (bufferTiva == "measure")
+    /*encendido(); // Neopixel
+    delay(1000);
+    midiendo(); // Neopixel
+    delay(1000);
+    guardando(); // Neopixel
+    delay(1000);
+    datosguardados();
+    delay(1000);
+    error(); // Neopixel
+    delay(1000);*/
+
+    if (Serial2.available() > 0)
     {
-      Serial.println("Midiendo...");
+      bufferTiva = Serial2.readStringUntil('\n');
+      bufferTiva.trim(); // Eliminar espacios en blanco y caracteres no deseados
+      if (bufferTiva == "measure")
+      {
+        Serial.println("Midiendo...");
         String dataToSend = String(a.acceleration.x) + " ; " + String(a.acceleration.y) + " ; " + String(a.acceleration.z);
         Serial2.print(dataToSend); // Envía la información al ESP32 como una sola cadena
 
@@ -98,34 +111,35 @@ void loop()
         Serial.print(" ; ");
         Serial.println(a.acceleration.z);
         Serial.println("--------------------------------------------");
-  
-      bufferTiva = "";
 
-      midiendo(); // Neopixel
-      delay(500);
-    }
+        bufferTiva = "";
 
-    if (bufferTiva == "saving")
-    {
-      guardando(); // Neopixel
-      delay(200);
-      datosGuardados();
-      delay(300);
-    }
+        midiendo(); // Neopixel
+        delay(500);
+      }
 
-    if (bufferTiva == "on")
-    {
-      encendido(); // Neopixel
-      delay(500);
-    }
+      if (bufferTiva == "saving")
+      {
+        guardando(); // Neopixel
+        delay(200);
+        datosguardados();
+        delay(300);
+      }
 
-    if (bufferTiva == "error")
-    {
-      error();
-      delay(500);
+      if (bufferTiva == "on")
+      {
+        encendido(); // Neopixel
+        delay(500);
+      }
+
+      if (bufferTiva == "error")
+      {
+        error();
+        delay(500);
+      }
     }
   }
-}}
+}
 
 // Voids para programar Neopixel ************************************
 void midiendo() // luces que muestra que se mide el sensor
@@ -140,7 +154,6 @@ void midiendo() // luces que muestra que se mide el sensor
       pixels.clear();
       pixels.show();
     }
-    delay(500);
   }
 }
 
@@ -156,11 +169,10 @@ void guardando()
       pixels.clear();
       pixels.show();
     }
-    delay(500);
   }
 }
 
-void datosGuardados() // luces que muestra que se guardaron los datos
+void datosguardados() // luces que muestra que se guardaron los datos
 {
   for (int j = 0; j < 3; j++)
   {
@@ -169,10 +181,10 @@ void datosGuardados() // luces que muestra que se guardaron los datos
       pixels.setPixelColor(i, pixels.Color(0, 255, 0)); // Verde
     }
     pixels.show();
-    delay(20);
+    delay(500);
     pixels.clear();
     pixels.show();
-    delay(20);
+    delay(500);
   }
 }
 
@@ -182,12 +194,28 @@ void error() // luces que muestra que se obtuvo un error
   {
     for (int i = 0; i < NUMPIXELS; i++)
     {
-      pixels.setPixelColor(i, pixels.Color(0, 255, 0)); // Rojo
+      pixels.setPixelColor(i, pixels.Color(255, 0, 0)); // Rojo
     }
     pixels.show();
-    delay(20);
+    delay(500);
     pixels.clear();
     pixels.show();
-    delay(20);
+    delay(500);
+  }
+}
+
+void encendido() // luces que muestra que se obtuvo un error
+{
+  for (int j = 0; j < 3; j++)
+  {
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(255, 120, 180)); // Rosado
+    }
+    pixels.show();
+    delay(500);
+    pixels.clear();
+    pixels.show();
+    delay(500);
   }
 }
