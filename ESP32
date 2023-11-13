@@ -122,7 +122,11 @@ void loop()
       {
         guardando(); // Neopixel
         delay(200);
-        datosguardados();
+      }
+
+      if (bufferTiva == "saved")
+      {
+        datosguardados(); //Neopixel
         delay(300);
       }
 
