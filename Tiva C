@@ -68,8 +68,9 @@ void girar();
 void volar();
 void piso();
 
-extern uint8_t giro[];
-extern uint8_t flappy[];
+extern uint8_t flappy1[];
+extern uint8_t flappy2[];
+extern uint8_t flappy3[];
 
 //----------------------- Void Setup -----------------------
 void setup() {
@@ -131,7 +132,7 @@ void loop() {
     FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de azul
     piso();
     volar();
-    
+
     delay(100);
 
     String text5 = "Giro en x, y & z:";
@@ -146,7 +147,7 @@ void loop() {
     Serial.println("Giro en x, y & z:");
     Serial.println(inByte); //imprime info en serial monitor
     piso();
-    girar();
+    volar();
     delay(100);
   }
 
@@ -201,24 +202,38 @@ void piso() {
     LCD_Bitmap(x, 207, 16, 16, tile);
     LCD_Bitmap(x, 223, 16, 16, tile);
     x += 15;
+
   }
 }
 
 void girar() {
-  for (int x = 0; x < 320 - 32; x++) { //sprite flappy girando
-    delay(15);
-    int anim2 = (x / 10) % 4;
-    LCD_Sprite(x, 75, 150, 40, giro, 4, anim2, 0, 1);
+  for (int x = 0; x < 10; x++) {  // Reemplaza '10' con el número deseado de iteraciones
+    LCD_Bitmap(200, 75, 45, 40, flappy1); //imprime imagen
+    delay(1000);
+    LCD_Bitmap(200, 75, 45, 40, flappy3); //imprime imagen
     delay(500);
+    if (estadoMed == LOW) {
+      break;
+    }
+    if (estadoGuar == LOW) {
+      break;
+    }
   }
 }
 
 void volar() {
-  for (int x = 0; x < 320 - 32; x++) { //sprite flappy bird
-    delay(15);
-    int anim2 = (x / 10) % 4;
-    LCD_Sprite(x, 75, 150, 40, flappy, 4, anim2, 0, 1);
-    delay(500);
+  for (int x = 0; x < 10; x++) {  // Reemplaza '10' con el número deseado de iteraciones
+    LCD_Bitmap(200, 75, 45, 40, flappy1); //imprime imagen
+    delay(200);
+    LCD_Bitmap(200, 75, 45, 40, flappy2); //imprime imagen
+    delay(200);
+    
+    if (estadoMed == LOW) {
+      break;
+    }
+    if (estadoGuar == LOW) {
+      break;
+    }
   }
 }
 
