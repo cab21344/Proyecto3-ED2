@@ -6,12 +6,16 @@
 #include <Wire.h>              //librería para comunicación I2C
 #include <Adafruit_NeoPixel.h> //librería para neopixel
 #include <Adafruit_MPU6050.h>  //librería sensor
+#include <Adafruit_Sensor.h>   //librería sensor
 
 //*****************************************************************
 
 // Definiciones ***************************************************
 #define NUMPIXELS 16 // numero de pixeles
 #define LEDS 23      // pin de neopixeles
+
+#define SDA_PIN 21 //pines sensor
+#define SCL_PIN 22
 //*****************************************************************
 
 // Variables ******************************************************
@@ -32,6 +36,10 @@ void error();
 
 void setup()
 {
+  // start the serial connection
+  Serial.begin(115200);
+  Serial2.begin(115200);
+  
   // Inicia NeoPixels
   pixels.begin();
   pixels.clear();
@@ -40,110 +48,116 @@ void setup()
   pixels.setPixelColor(0, pixels.Color(255, 192, 203)); // pone los leds en rosado
   pixels.show();
 
-  // start the serial connection
-  Serial.begin(115200);
-  Serial2.begin(115200);
-
   // wait for serial monitor to open
-  while (!Serial)
-    ;
+  while (!Serial);
   Serial.print("Conectando...");
 
-  // configuración sensor
-  Wire.begin();
+  // Sensro MPU6050
+  Serial.println("Iniciando MPU6050...");
 
-  Serial.println("Adafruit MPU6050 test!");
-
-  // Try to initialize!
+  // Inicializar el sensor MPU6050
   if (!mpu.begin())
   {
-    Serial.println("Failed to find MPU6050 chip");
-    Serial.println("Program will exit due to sensor initialization failure");
-    exit(1); // Detener la ejecución del programa
+    Serial.println("Error al encontrar el chip MPU6050. Verifica las conexiones.");
+    while (1)
+    {
+      delay(10);
+    }
   }
+
+  Serial.println("MPU6050 encontrado correctamente!");
+
+  // Configuración de rangos y filtro del MPU6050
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+  mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
+  mpu.setMotionDetectionThreshold(1);
+  mpu.setMotionDetectionDuration(20);
+  mpu.setInterruptPinLatch(true);	// Keep it latched.  Will turn off when reinitialized.
+  mpu.setInterruptPinPolarity(true);
+  mpu.setMotionInterrupt(true);
+
+
+  delay(100);
 }
 
 void loop()
 {
-  // obtener datos del acelerómetro
-  if (mpu.getMotionInterruptStatus())
+
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  // Imprimir los valores
+  Serial.print("AccelX: ");
+  Serial.print(a.acceleration.x);
+  Serial.print(", AccelY: ");
+  Serial.print(a.acceleration.y);
+  Serial.print(", AccelZ: ");
+  Serial.print(a.acceleration.z);
+  Serial.print(", GyroX: ");
+  Serial.print(g.gyro.x);
+  Serial.print(", GyroY: ");
+  Serial.print(g.gyro.y);
+  Serial.print(", GyroZ: ");
+  Serial.println(g.gyro.z);
+
+  encendido();
+  midiendo();
+  guardando();
+  datosguardados();
+  error();
+
+  if (Serial2.available() > 0)
   {
-    // Get new sensor events with the readings
-    sensors_event_t a, g, temp;
-    mpu.getEvent(&a, &g, &temp);
-
-    // Print out the values
-    Serial.print("AccelX:");
-    Serial.print(a.acceleration.x);
-    Serial.print(",");
-    Serial.print("AccelY:");
-    Serial.print(a.acceleration.y);
-    Serial.print(",");
-    Serial.print("AccelZ:");
-    Serial.print(a.acceleration.z);
-
-    /*encendido(); // Neopixel
-    delay(1000);
-    midiendo(); // Neopixel
-    delay(1000);
-    guardando(); // Neopixel
-    delay(1000);
-    datosguardados();
-    delay(1000);
-    error(); // Neopixel
-    delay(1000);*/
-
-    if (Serial2.available() > 0)
+    bufferTiva = Serial2.readStringUntil('\n');
+    bufferTiva.trim(); // Eliminar espacios en blanco y caracteres no deseados
+    if (bufferTiva == "measure")
     {
-      bufferTiva = Serial2.readStringUntil('\n');
-      bufferTiva.trim(); // Eliminar espacios en blanco y caracteres no deseados
-      if (bufferTiva == "measure")
-      {
-        Serial.println("Midiendo...");
-        String dataToSend = String(a.acceleration.x) + " ; " + String(a.acceleration.y) + " ; " + String(a.acceleration.z);
-        Serial2.print(dataToSend); // Envía la información al ESP32 como una sola cadena
+      Serial.println("Midiendo...");
+      String dataToSend = String(a.acceleration.x) + " ; " + String(a.acceleration.y) + " ; " + String(a.acceleration.z);
+      Serial2.print(dataToSend); // Envía la información al ESP32 como una sola cadena
 
-        Serial.println("Se envió satisfactoriamente la información:");
-        Serial.print("Posición en x ; y ; z");
-        Serial.print(a.acceleration.x);
-        Serial.print(" ; ");
-        Serial.println(a.acceleration.y);
-        Serial.print(" ; ");
-        Serial.println(a.acceleration.z);
-        Serial.println("--------------------------------------------");
+      Serial.println("Se envió satisfactoriamente la información:");
+      Serial.print("Posición en x ; y ; z");
+      Serial.print(a.acceleration.x);
+      Serial.print(" ; ");
+      Serial.println(a.acceleration.y);
+      Serial.print(" ; ");
+      Serial.println(a.acceleration.z);
+      Serial.println("--------------------------------------------");
 
-        bufferTiva = "";
+      bufferTiva = "";
 
-        midiendo(); // Neopixel
-        delay(500);
-      }
-
-      if (bufferTiva == "saving")
-      {
-        guardando(); // Neopixel
-        delay(200);
-      }
-
-      if (bufferTiva == "saved")
-      {
-        datosguardados(); //Neopixel
-        delay(300);
-      }
-
-      if (bufferTiva == "on")
-      {
-        encendido(); // Neopixel
-        delay(500);
-      }
-
-      if (bufferTiva == "error")
-      {
-        error();
-        delay(500);
-      }
+      midiendo(); // Neopixel
+      delay(500);
     }
+
+  if (bufferTiva == "saving")
+  {
+    guardando(); // Neopixel
+    delay(200);
   }
-}
+
+  if (bufferTiva == "saved")
+  {
+    datosguardados(); // Neopixel
+    delay(300);
+  }
+
+  if (bufferTiva == "on")
+  {
+    encendido(); // Neopixel
+    delay(500);
+  }
+
+  if (bufferTiva == "error")
+  {
+    error();
+    delay(500);
+  }
+}}
 
 // Voids para programar Neopixel ************************************
 void midiendo() // luces que muestra que se mide el sensor
