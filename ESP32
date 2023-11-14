@@ -14,7 +14,7 @@
 #define NUMPIXELS 16 // numero de pixeles
 #define LEDS 23      // pin de neopixeles
 
-#define SDA_PIN 21 //pines sensor
+#define SDA_PIN 21 // pines sensor
 #define SCL_PIN 22
 //*****************************************************************
 
@@ -39,7 +39,7 @@ void setup()
   // start the serial connection
   Serial.begin(115200);
   Serial2.begin(115200);
-  
+
   // Inicia NeoPixels
   pixels.begin();
   pixels.clear();
@@ -49,7 +49,8 @@ void setup()
   pixels.show();
 
   // wait for serial monitor to open
-  while (!Serial);
+  while (!Serial)
+    ;
   Serial.print("Conectando...");
 
   // Sensro MPU6050
@@ -75,57 +76,39 @@ void setup()
   mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
   mpu.setMotionDetectionThreshold(1);
   mpu.setMotionDetectionDuration(20);
-  mpu.setInterruptPinLatch(true);	// Keep it latched.  Will turn off when reinitialized.
+  mpu.setInterruptPinLatch(true); // Keep it latched.  Will turn off when reinitialized.
   mpu.setInterruptPinPolarity(true);
   mpu.setMotionInterrupt(true);
-
 
   delay(100);
 }
 
 void loop()
 {
-
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
-  // Imprimir los valores
-  Serial.print("AccelX: ");
-  Serial.print(a.acceleration.x);
-  Serial.print(", AccelY: ");
-  Serial.print(a.acceleration.y);
-  Serial.print(", AccelZ: ");
-  Serial.print(a.acceleration.z);
-  Serial.print(", GyroX: ");
-  Serial.print(g.gyro.x);
-  Serial.print(", GyroY: ");
-  Serial.print(g.gyro.y);
-  Serial.print(", GyroZ: ");
-  Serial.println(g.gyro.z);
-
-  encendido();
-  midiendo();
-  guardando();
-  datosguardados();
-  error();
+  //Serial.println("Dentro del loop");
+  //Serial2.println("Comunicación con el ESP32");
 
   if (Serial2.available() > 0)
   {
     bufferTiva = Serial2.readStringUntil('\n');
     bufferTiva.trim(); // Eliminar espacios en blanco y caracteres no deseados
-    if (bufferTiva == "measure")
+
+    if (bufferTiva == "m")
     {
       Serial.println("Midiendo...");
-      String dataToSend = String(a.acceleration.x) + " ; " + String(a.acceleration.y) + " ; " + String(a.acceleration.z);
+      String dataToSend = String(g.gyro.x) + " ; " + String(g.gyro.y) + " ; " + String(g.gyro.z);
       Serial2.print(dataToSend); // Envía la información al ESP32 como una sola cadena
 
       Serial.println("Se envió satisfactoriamente la información:");
-      Serial.print("Posición en x ; y ; z");
-      Serial.print(a.acceleration.x);
+      Serial.print("Giro en x ; y ; z");
+      Serial.print(g.gyro.x);
       Serial.print(" ; ");
-      Serial.println(a.acceleration.y);
+      Serial.println(g.gyro.y);
       Serial.print(" ; ");
-      Serial.println(a.acceleration.z);
+      Serial.println(g.gyro.z);
       Serial.println("--------------------------------------------");
 
       bufferTiva = "";
@@ -133,31 +116,30 @@ void loop()
       midiendo(); // Neopixel
       delay(500);
     }
-
-  if (bufferTiva == "saving")
-  {
-    guardando(); // Neopixel
-    delay(200);
+    else if (bufferTiva == "s")
+    {
+      guardando(); // Neopixel
+      delay(200);
+    }
+    else if (bufferTiva == "d")
+    {
+      datosguardados(); // Neopixel
+      delay(300);
+    }
+    else if (bufferTiva == "on")
+    {
+      encendido(); // Neopixel
+      delay(500);
+    }
+    else if (bufferTiva == "e")
+    {
+      error();
+      delay(50);
+    }
   }
 
-  if (bufferTiva == "saved")
-  {
-    datosguardados(); // Neopixel
-    delay(300);
-  }
-
-  if (bufferTiva == "on")
-  {
-    encendido(); // Neopixel
-    delay(500);
-  }
-
-  if (bufferTiva == "error")
-  {
-    error();
-    delay(500);
-  }
-}}
+  delay(3000);
+}
 
 // Voids para programar Neopixel ************************************
 void midiendo() // luces que muestra que se mide el sensor
