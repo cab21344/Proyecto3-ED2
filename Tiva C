@@ -29,7 +29,7 @@
 #define SCK PA_2  // Pin SCK de la Tiva (PA2)
 #define MISO PA_4 // Pin MISO de la Tiva (PA4)
 #define MOSI PA_5 // Pin MOSI de la Tiva (PA5)
-#define SS PA_3   // Pin SS de la Tiva (PA3)
+#define SS PE_3   // Pin SS de la Tiva (PA3)
 //----------------------- Definiciones -----------------------
 #define LCD_RST PD_0
 #define LCD_CS PD_1
@@ -63,8 +63,13 @@ void LCD_Print(String text, int x, int y, int fontSize, int color, int backgroun
 void LCD_Bitmap(unsigned int x, unsigned int y, unsigned int width, unsigned int height, unsigned char bitmap[]);
 void LCD_Sprite(int x, int y, int width, int height, unsigned char bitmap[], int columns, int index, char flip, char offset);
 
+//voids para flappy bird
+void girar();
+void volar();
+void piso();
 
-extern uint8_t fondo[];
+extern uint8_t giro[];
+extern uint8_t flappy[];
 
 //----------------------- Void Setup -----------------------
 void setup() {
@@ -80,18 +85,18 @@ void setup() {
 
 
   //se inicia SD ***********************
-  /* Serial.println("Iniciando tarjeta SD");
+  /*Serial.println("Iniciando tarjeta SD");
 
     if (!SD.begin(chipSelect)) { //pin de la SD
-     Serial.println("Inicialización fallida de SD");
-     return; //si falla que se quede en bucle
-     }
-     Serial.println("Tarjeta SD inicializada"); //mensaje de SD inicializada
-  */
+    Serial.println("Inicialización fallida de SD");
+    return; //si falla que se quede en bucle
+    }
+    Serial.println("Tarjeta SD inicializada"); //mensaje de SD inicializada*/
 
   //Indica que se inició comunicación serial ***********************
   Serial.println("Inicio de comunicación serial"); //confimación comunicación serial
-
+  Serial2.println("Comunicación con Tiva");
+  Serial2.println("on");
 
   // ****************************************************************************
 
@@ -101,89 +106,48 @@ void setup() {
   LCD_Init();
   LCD_Clear(0xFFFF); //limpia la pantalla
 
-  FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de rosado
+  FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de azul
   String text1 = "Iniciando pantalla"; //mensaje
-  LCD_Print(text1, 20, 100, 2, 0xffff, 0x0598); //escribe el mensaje con fondo rosado
-  LCD_Bitmap(240, 10, 60, 77, flappy); //imprime imagen
-
-  for (int x = 0; x < 319; x++) {
-    LCD_Bitmap(x, 207, 16, 16, tile);
-    LCD_Bitmap(x, 223, 16, 16, tile);
-    x += 15;
-  }
-
-
+  LCD_Print(text1, 10, 150, 2, 0xffff, 0x0598); //escribe el mensaje con fondo azul
+  piso();
+  volar();
+  delay(500);
 }
 
-// ----------------------- Void Loop ------------------------
+// ----------------------- Void Loop -----------------------
 void loop() {
   //Lectura estados botones
   estadoMed = digitalRead(botonMedir);
   estadoGuar = digitalRead(botonGuardar);
-  Serial2.println("on"); //manda mensaje de encendido (ESP32)
-
 
   //Boton 1 - Pide info al ESP32 **************************************************
   if (estadoMed == LOW) {
     Serial.println("Medición:");
-    Serial2.println("m"); //manda mensaje de midiendo (ESP32)
-    for (int x = 0; x < 320 - 32; x++) {
-      delay(15);
-      int anim2 = (x / 35) % 4;
-
-      // Utiliza una posición fija en el eje x, por ejemplo, x_fijo
-      int x_fijo = 150;
-
-      LCD_Sprite(x_fijo, 100, 150, 40, turning, 4, anim2, 0, 1);
-    }
-    for (int x = 0; x < 319; x++) {
-      LCD_Bitmap(x, 207, 16, 16, tile);
-      LCD_Bitmap(x, 223, 16, 16, tile);
-      x += 15;
-    }
-    delay(1000);
+    Serial2.println("m"); //manda mensaje al puerto serial2 (ESP32)
+    delay(500);
 
     LCD_Clear(0x0598); //limpia la pantalla
 
-    FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de azul cielo
-    String text5 = "Aceleracion:";
-    LCD_Print(text5, 20, 75, 2, 0xffff, 0x0598); //escribe el mensaje con fondo azul cielo
-    LCD_Print(inByte, 20, 100, 2, 0xffff, 0x0598); //escribe el strign con fondo azul cielo
-    for (int x = 0; x < 320 - 32; x++) {
-      delay(15);
-      int anim2 = (x / 35) % 3;
+    FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de azul
+    piso();
+    volar();
+    
+    delay(100);
 
-      // Utiliza una posición fija en el eje x, por ejemplo, x_fijo
-      int x_fijo = 150;
+    String text5 = "Giro en x, y & z:";
+    LCD_Print(text5, 10, 130, 2, 0xffff, 0x0598); //escribe el mensaje con fondo azul
+    LCD_Print(inByte, 10, 150, 2, 0xffff, 0x0598); //escribe el strign con fondo azul
 
-      LCD_Sprite(x_fijo, 100, 150, 40, flappy, 3, anim2, 0, 1);
-    }
-    for (int x = 0; x < 319; x++) {
-      LCD_Bitmap(x, 207, 16, 16, tile);
-      LCD_Bitmap(x, 223, 16, 16, tile);
-      x += 15;
-    }
-
+    delay(500);
   }
 
   if (Serial2.available()) { //lectura del puerto serial2 (ESP32)
     inByte = Serial2.readStringUntil('\n'); //guarda info
-    Serial.println("Aceleración:");
+    Serial.println("Giro en x, y & z:");
     Serial.println(inByte); //imprime info en serial monitor
-    for (int x = 0; x < 320 - 32; x++) {
-      delay(15);
-      int anim2 = (x / 35) % 3;
-
-      // Utiliza una posición fija en el eje x, por ejemplo, x_fijo
-      int x_fijo = 150;
-
-      LCD_Sprite(x_fijo, 100, 150, 40, flappy, 3, anim2, 0, 1);
-    }
-    for (int x = 0; x < 319; x++) {
-      LCD_Bitmap(x, 207, 16, 16, tile);
-      LCD_Bitmap(x, 223, 16, 16, tile);
-      x += 15;
-    }
+    piso();
+    girar();
+    delay(100);
   }
 
   if (Serial.available()) {
@@ -194,63 +158,70 @@ void loop() {
   //Boton 2 - Guardar info en la SD **************************************************
   if (estadoGuar == LOW) {
     dataFile = SD.open("test.txt", FILE_WRITE); //archivo para SD
-    Serial2.println("s"); //manda mensaje de que se esta guardando (ESP32)
+    Serial2.println("s"); //mensaje que se esta guardando (ESP32)
 
     if (dataFile) {
       dataFile.println(inByte); //guarda dato tarjeta SD
       dataFile.close();
       Serial.println("Información almacenada en la SD!");
-      Serial2.println("d"); //manda mensaje de guardado (ESP32)
+      Serial2.println("d"); //mensaje que se guardo (ESP32)
       delay(500);
+
       LCD_Clear(0x0598); //limpia la pantalla
+      FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de azul
+      piso();
+      volar();
+      delay(100);
 
-      FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de azul cielo
       String text2 = "Info almacenada";
-      LCD_Print(text2, 20, 100, 2, 0xffff, 0x0598); //imprime texto con fondo azul cielo
-      for (int x = 0; x < 320 - 32; x++) {
-        delay(15);
-        int anim2 = (x / 35) % 3;
+      LCD_Print(text2, 10, 150, 2, 0xffff, 0x0598); //imprime texto con fondo azul
 
-        // Utiliza una posición fija en el eje x, por ejemplo, x_fijo
-        int x_fijo = 150;
-
-        LCD_Sprite(x_fijo, 100, 150, 40, flappy, 3, anim2, 0, 1);
-      }
-      for (int x = 0; x < 319; x++) {
-        LCD_Bitmap(x, 207, 16, 16, tile);
-        LCD_Bitmap(x, 223, 16, 16, tile);
-        x += 15;
-      }
     } else {
+      delay(3000);
       Serial.println("Error al almacenar información");
-      Serial2.println("e"); //manda mensaje de error (ESP32)
+      Serial2.println("e"); //mensaje de error (ESP32)
       delay(500);
       LCD_Clear(0x0598); //limpia pantalla
-      Serial2.println("error"); //manda mensaje al puerto serial2 (ESP32)
 
+      FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de azul
+      piso();
+      girar();
+      delay(100);
 
-      FillRect(0, 0, 320, 240, 0x0598); //llena la pantalla de azul cielo
       String text3 = "Info no almacenada";
-      LCD_Print(text3, 20, 100, 2, 0xffff, 0x0598); //imprime mensaje con fondo azul cielo
-      for (int x = 0; x < 320 - 32; x++) {
-        delay(15);
-        int anim2 = (x / 35) % 4;
-
-        // Utiliza una posición fija en el eje x, por ejemplo, x_fijo
-        int x_fijo = 150;
-
-        LCD_Sprite(x_fijo, 100, 150, 40, turning, 4, anim2, 0, 1);
-      }
-      for (int x = 0; x < 319; x++) {
-        LCD_Bitmap(x, 207, 16, 16, tile);
-        LCD_Bitmap(x, 223, 16, 16, tile);
-        x += 15;
-      }
+      LCD_Print(text3, 10, 150, 2, 0xffff, 0x0598); //imprime mensaje con fondo azul
     }
-
-    delay(100);
   }
 }
+
+
+//Voids para flappy bird
+void piso() {
+  for (int x = 0; x < 319; x++) { //bitmap piso
+    LCD_Bitmap(x, 207, 16, 16, tile);
+    LCD_Bitmap(x, 223, 16, 16, tile);
+    x += 15;
+  }
+}
+
+void girar() {
+  for (int x = 0; x < 320 - 32; x++) { //sprite flappy girando
+    delay(15);
+    int anim2 = (x / 10) % 4;
+    LCD_Sprite(x, 75, 150, 40, giro, 4, anim2, 0, 1);
+    delay(500);
+  }
+}
+
+void volar() {
+  for (int x = 0; x < 320 - 32; x++) { //sprite flappy bird
+    delay(15);
+    int anim2 = (x / 10) % 4;
+    LCD_Sprite(x, 75, 150, 40, flappy, 4, anim2, 0, 1);
+    delay(500);
+  }
+}
+
 //----------------------- Inicio LCD -----------------------
 void LCD_Init(void) {
   pinMode(LCD_RST, OUTPUT);
